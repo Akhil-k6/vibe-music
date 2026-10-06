@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECCOverse — Music Streaming</title>
+    <meta name="description" content="ECCOverse — Explore. Listen. Feel the universe of music.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3C%3Fxml version=%221.0%22 encoding=%22UTF-8%22%3F%3E%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22 width=%2264%22 height=%2264%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2220%22 fill=%22%23c9c5fb%22/%3E%3Cpath d=%22M11 32H17V21H27V43H37V25H45V32H53%22 fill=%22none%22 stroke=%22%23181a24%22 stroke-width=%225.2%22 stroke-linecap=%22square%22 stroke-linejoin=%22miter%22/%3E%3C/svg%3E">
+    <link rel="alternate icon" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- ══════════ ATMOSPHERIC BACKDROP (photo, blurred behind the glass) ══════════ -->
+    <div class="page-backdrop" aria-hidden="true"></div>
+    <div class="noise-overlay" aria-hidden="true"></div>
+
+    <!-- ══════════ APP SHELL: SIDEBAR · CENTER · RIGHT RAIL ══════════ -->
+    <div class="app-shell">
+
+        <!-- ── LEFT: SIDEBAR ── -->
+        <aside class="sidebar">
+            <div class="logo" onclick="navigateTo('home')">
+                <div class="logo-icon"><i class="fas fa-wave-square"></i></div>
+                <span class="logo-text">ECCOverse</span>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-label">Menu</div>
+                <button class="nav-item active" data-page="home" onclick="navigateTo('home')"><i class="fas fa-house"></i><span>Home</span></button>
+                <button class="nav-item" data-page="explore" onclick="navigateTo('explore')"><i class="fas fa-compass"></i><span>Explore</span></button>
+                <button class="nav-item" data-page="library" onclick="navigateTo('library')"><i class="fas fa-book-open"></i><span>Library</span></button>
+                <button class="nav-item" data-page="favorites" onclick="navigateTo('favorites')"><i class="fas fa-heart"></i><span>Favorites</span><span class="nav-count" id="favCount" style="display:none">0</span></button>
+
+                <div class="nav-label">Your Collection</div>
+                <button class="nav-item" data-page="playlists" onclick="navigateTo('playlists')"><i class="fas fa-list-ul"></i><span>Playlists</span></button>
+                <button class="nav-item" data-page="artists" onclick="navigateTo('artists')"><i class="fas fa-microphone-lines"></i><span>Artists</span></button>
+                <button class="nav-item" data-page="albums" onclick="navigateTo('albums')"><i class="fas fa-record-vinyl"></i><span>Albums</span></button>
+                <button class="nav-item" data-liked="1" onclick="showLikedSongsPlaylist()"><i class="fas fa-heart"></i><span>Liked Songs</span></button>
+            </nav>
+
+            <div class="playlists-section">
+                <div class="playlists-title">Your Playlists</div>
+                <div id="sidebarPlaylistList" class="sidebar-playlist-list"></div>
+                <button class="new-playlist-btn" onclick="createNewPlaylist()"><i class="fas fa-plus"></i><span>New Playlist</span></button>
+            </div>
+
+            <div class="playlists-section">
+                <div class="playlists-title">Recently Played</div>
+                <div id="sidebarRecentList" class="sidebar-recent-list"></div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-chip sidebar-user" onclick="openSyncModal()" title="Sync & Manage Profile">
+                    <img src="https://i.pravatar.cc/150?img=12" alt="Listener" class="user-avatar">
+                    <div class="user-meta">
+                        <span class="user-name" id="userNameDisplay">Explorer</span>
+                        <span class="user-plan" id="userPlanLabel">Premium · local</span>
+                    </div>
+                    <i class="fas fa-up-down fa-xs chip-caret" aria-hidden="true"></i>
+                </div>
+                <div class="vibe-card">
+                    <div class="vibe-weather">
+                        <i class="fas fa-cloud-moon vibe-weather-icon" aria-hidden="true"></i>
+                        <div class="vibe-weather-copy">
+                            <strong id="sidebarBitrate">— kbps</strong>
+                            <span id="sidebarBitrateSub">Pick a song for stream quality</span>
+                        </div>
+                    </div>
+                    <div class="vibe-top">
+                        <div class="vibe-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                        <div class="vibe-copy"><strong id="sidebarEqLabel">EQ · Flat</strong><span id="sidebarEqSub">Hi-Fi streaming · idle</span></div>
+                        <button class="icon-btn small" onclick="AudioEffects.open()" title="Open equalizer" aria-label="Open equalizer"><i class="fas fa-sliders"></i></button>
+                    </div>
+                    <div class="vibe-foot">
+                        <span class="vibe-loc"><i class="fas fa-location-dot" aria-hidden="true"></i> Your Vibe, Always</span>
+                        <button class="icon-btn small" onclick="openSyncModal()" title="Sync across browsers"><i class="fas fa-arrows-rotate"></i></button>
+                        <button class="icon-btn small premium-btn" onclick="showToast('👑 You are on Pro')" title="Pro Plan"><i class="fas fa-crown"></i></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── CENTER: SEARCH + PAGES + PLAYER ── -->
+        <main class="center-col">
+
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search songs, albums, artists…"
+                           onclick="openSearchInterface()" onfocus="openSearchInterface()" oninput="handleInterfaceSearch(this.value)"
+                           aria-label="Search songs and albums" aria-controls="dashboardSearchPanel" aria-expanded="false" autocomplete="off" />
+                    <div class="voice-hud" id="voiceSearchHUD" style="display:none;">
+                        <span class="pulse-dot red"></span>
+                        <span class="hud-text">Listening... Speak now</span>
+                        <div class="hud-waves"><span></span><span></span><span></span><span></span></div>
+                        <button class="hud-close-btn" onclick="stopVoiceSearch()" title="Cancel Voice Search"><i class="fas fa-xmark"></i></button>
+                    </div>
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search"><i class="fas fa-times"></i></button>
+                    <button class="voice-search-btn" id="voiceSearchBtn" onclick="toggleVoiceSearch()" title="Voice Search">
+                        <i class="fas fa-microphone" id="voiceMicIcon"></i>
+                    </button>
+                    <span class="search-kbd" aria-hidden="true">Ctrl K</span>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-btn" id="syncTopBtn" onclick="openSyncModal()" title="Sync Across Browsers & Devices"><i class="fas fa-arrows-rotate"></i></button>
+                    <button class="icon-btn" onclick="showToast('🔔 No new notifications')" title="Notifications"><i class="far fa-bell"></i><span class="dot-indicator"></span></button>
+                    <button class="topbar-avatar" onclick="openSyncModal()" title="Profile · sync & backup" aria-label="Open profile and sync">
+                        <img src="https://i.pravatar.cc/150?img=12" alt="Listener profile">
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area" id="contentArea">
+
+                <!-- SEARCH RESULTS LIVE INSIDE THE DASHBOARD (no overlay, no second input) -->
+                <section class="dashboard-search-panel" id="dashboardSearchPanel" aria-label="Music search">
+                    <div class="dashboard-search-heading">
+                        <div>
+                            <h2 class="section-title" id="dashboardSearchTitle">Find your next favourite</h2>
+                            <p class="section-sub">Search right here — playback keeps going.</p>
+                        </div>
+                        <button class="ghost-btn small search-dismiss-btn" onclick="closeSearchInterface()" aria-label="Close search results"><i class="fas fa-xmark"></i><span>Esc</span></button>
+                    </div>
+                    <div id="searchSuggestionsView" class="search-suggestions-view">
+                        <div class="suggestion-section">
+                            <h4 class="suggestion-title"><i class="fas fa-fire" style="color:#F59E0B;"></i> Trending Searches</h4>
+                            <div class="suggestion-tags">
+                                <button class="sug-tag" onclick="quickSearchQuery('Arijit Singh')">🔥 Arijit Singh</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Diljit Dosanjh')">🎤 Diljit Dosanjh</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Bollywood Hits')">💃 Bollywood Hits</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Lofi Chill')">🎧 Lofi Beats</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Taylor Swift')">⭐ Taylor Swift</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Punjabi Party')">⚡ Punjabi Party</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Romantic Songs')">💖 Romantic Duets</button>
+                                <button class="sug-tag" onclick="quickSearchQuery('Workout Motivation')">🏋️ Workout Power</button>
+                            </div>
+                        </div>
+                        <div class="suggestion-section" id="recentSearchesSection" style="margin-top:20px; display:none;">
+                            <div class="suggestion-head">
+                                <h4 class="suggestion-title" style="margin-bottom:0;"><i class="fas fa-clock-rotate-left" style="color:var(--primary);"></i> Recent Searches</h4>
+                                <button class="ghost-btn tiny" onclick="clearRecentSearches()"><i class="fas fa-trash-can"></i> Clear</button>
+                            </div>
+                            <div id="recentSearchesList" class="suggestion-tags"></div>
+                        </div>
+                    </div>
+
+                    <div id="interfaceSearchResults" class="interface-search-results" style="display:none;">
+                        <div class="search-res-tabs">
+                            <button class="res-tab active" id="tabResAll" aria-pressed="true" onclick="switchSearchResTab('all')">All Results</button>
+                            <button class="res-tab" id="tabResSongs" aria-pressed="false" onclick="switchSearchResTab('songs')">Songs 🎵</button>
+                            <button class="res-tab" id="tabResAlbums" aria-pressed="false" onclick="switchSearchResTab('albums')">Albums 💿</button>
+                        </div>
+                        <div class="search-results-layout" id="searchResultsLayout" data-tab="all">
+                            <div id="searchResSongsSection" class="search-res-section">
+                                <h3 class="res-section-title"><i class="fas fa-music"></i> Songs</h3>
+                                <div id="searchResSongsList" class="search-song-list"></div>
+                            </div>
+                            <div id="searchResAlbumsSection" class="search-res-section">
+                                <h3 class="res-section-title"><i class="fas fa-compact-disc"></i> Albums</h3>
+                                <div id="searchResAlbumsGrid" class="page-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════ HOME ════ -->
+                <div id="page-home" class="page-content active">
+
+                    <!-- HERO VIBE CARD -->
+                    <section class="hero-section" id="heroSection">
+                        <div class="hero-photo" id="heroPhoto" aria-hidden="true"></div>
+                        <div class="hero-bokeh" aria-hidden="true"></div>
+                        <div class="hero-shade" aria-hidden="true"></div>
+                        <div class="hero-copy">
+                            <div class="hero-eyebrow"><span id="heroEyebrow">Good music · Better mood</span></div>
+                            <h1 class="hero-title" id="heroTitle">Late Night<span>Vibes</span></h1>
+                            <p class="hero-subtitle" id="heroSubtitle">For the overthinkers, dreamers and night owls.</p>
+                            <div class="hero-cta">
+                                <button class="play-now-btn" id="heroDiscoveryBtn" onclick="playHeroVibe()" title="Discover a different song from this mood">
+                                    <i class="fas fa-play" id="heroPlayIcon"></i>
+                                    <span id="heroPlayText">Play Now</span>
+                                </button>
+                                <button class="ghost-btn" onclick="saveVibePlaylist()" title="Save this mood as a playlist"><i class="fas fa-plus"></i> Save Playlist</button>
+                            </div>
+                            <div class="hero-dots" id="heroDots" role="tablist" aria-label="Featured moods"></div>
+                        </div>
+                        <div class="hero-script" aria-hidden="true">Same<br>Music<br>Different<br>Mood</div>
+                    </section>
+
+                    <!-- RECENTLY PLAYED -->
+                    <section class="shelf-section" id="recentlyPlayedSection">
+                        <div class="shelf-head">
+                            <h2 class="section-title">Recently Played</h2>
+                            <button class="view-all-link" onclick="navigateTo('library')">See all <i class="fas fa-arrow-right fa-xs"></i></button>
+                        </div>
+                        <div class="shelf-row" id="recentlyPlayedRow"></div>
+                    </section>
+
+                    <!-- YOUR COLLECTIONS (filter pills) -->
+                    <section class="shelf-section">
+                        <div class="shelf-head">
+                            <div class="shelf-title-group">
+                                <h2 class="section-title">Your Playlists</h2>
+                                <div class="filter-pills" id="homeCollectionPills" role="group" aria-label="Filter your collections">
+                                    <button class="pill active" data-filter="all" aria-pressed="true" onclick="setHomeCollectionFilter('all')">All</button>
+                                    <button class="pill" data-filter="liked" aria-pressed="false" onclick="setHomeCollectionFilter('liked')">Liked Songs</button>
+                                    <button class="pill" data-filter="albums" aria-pressed="false" onclick="setHomeCollectionFilter('albums')">Albums</button>
+                                    <button class="pill" data-filter="artists" aria-pressed="false" onclick="setHomeCollectionFilter('artists')">Artists</button>
+                                </div>
+                            </div>
+                            <button class="view-all-link" onclick="navigateTo('playlists')">See all <i class="fas fa-arrow-right fa-xs"></i></button>
+                        </div>
+                        <div class="shelf-grid" id="homePlaylistsGrid"></div>
+                    </section>
+
+                    <!-- FEATURED -->
+                    <section class="shelf-section">
+                        <div class="shelf-head">
+                            <div>
+                                <h2 class="section-title">Featured Playlists</h2>
+                                <p class="section-sub">Hand-picked moods, refreshed daily</p>
+                            </div>
+                            <button class="view-all-link" onclick="viewAllPlaylists()">View all</button>
+                        </div>
+                        <div class="playlists-grid" id="featuredGrid"></div>
+                    </section>
+
+                    <!-- QUICK PICKS -->
+                    <section class="shelf-section">
+                        <div class="shelf-head">
+                            <div>
+                                <h2 class="section-title">Quick Picks</h2>
+                                <p class="section-sub">Jump straight into a vibe</p>
+                            </div>
+                        </div>
+                        <div class="quick-grid" id="quickGrid"></div>
+                    </section>
+                </div>
+
+                <!-- ════ OTHER PAGES ════ -->
+                <div id="page-explore" class="page-content">
+                    <div class="page-heading">
+                        <h1 class="page-title">Explore</h1>
+                        <p class="section-sub">Pick a genre and dive into its universe</p>
+                    </div>
+                    <div id="exploreContent"><div class="explore-genre-grid" id="exploreGenreGrid"></div></div>
+                </div>
+
+                <div id="page-library" class="page-content">
+                    <div class="page-heading">
+                        <h1 class="page-title">Library</h1>
+                        <p class="section-sub">Everything you saved, one tap away</p>
+                    </div>
+                    <div class="page-grid" id="libraryGrid"></div>
+                </div>
+
+                <div id="page-favorites" class="page-content">
+                    <div class="page-heading fav-heading">
+                        <div>
+                            <h1 class="page-title">Favorites</h1>
+                            <p class="section-sub">The songs your heart keeps</p>
+                        </div>
+                        <div id="favHeaderActions" style="display:none;">
+                            <button class="ghost-btn small danger-btn" onclick="clearAllFavorites()"><i class="fas fa-trash-can"></i> Clear All</button>
+                        </div>
+                    </div>
+                    <div id="favoritesContent"><div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet. Tap ♥ on any song.</p></div></div>
+                </div>
+
+                <div id="page-playlists" class="page-content">
+                    <div class="page-heading playlists-heading">
+                        <div>
+                            <h1 class="page-title">Playlists</h1>
+                            <p class="section-sub">Your collections + global charts</p>
+                        </div>
+                        <button class="ghost-btn small" onclick="openSyncModal()"><i class="fas fa-arrows-rotate"></i> Sync Data</button>
+                    </div>
+                    <div id="userPlaylistsSection">
+                        <div class="subsection-head">
+                            <h3 class="subsection-title" style="margin-bottom:0;"><i class="fas fa-user"></i> My Playlists</h3>
+                            <button class="ghost-btn small" onclick="createNewPlaylist()"><i class="fas fa-plus"></i> New Playlist</button>
+                        </div>
+                        <div id="userPlaylistsContent"><div class="empty-state"><i class="fas fa-folder-open"></i><p>No playlists created yet</p></div></div>
+                    </div>
+                    <div id="globalPlaylistsSection">
+                        <h3 class="subsection-title"><i class="fas fa-globe-americas"></i> Global Playlists</h3>
+                        <div id="playlistsContent"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading global playlists...</p></div></div>
+                    </div>
+                    <div class="playlist-detail-view" id="playlistDetailView">
+                        <div class="playlist-detail-header">
+                            <button class="back-btn" onclick="closePlaylistDetail()"><i class="fas fa-arrow-left"></i></button>
+                            <div class="playlist-detail-cover" id="detailPlaylistCover" aria-hidden="true"><i class="fas fa-music"></i></div>
+                            <div class="info">
+                                <h2 id="detailPlaylistName">Playlist</h2>
+                                <div class="sub">By <span class="singer" id="detailSingerName">Artist</span> • <span id="detailSongCount">0</span> songs</div>
+                            </div>
+                            <div class="detail-actions">
+                                <button class="play-now-btn small-btn" onclick="playDetailFirst()"><i class="fas fa-play"></i> Play All</button>
+                                <button class="ghost-btn small danger-btn" id="deletePlaylistDetailBtn" style="display:none;" onclick="deleteCurrentDetailPlaylist()"><i class="fas fa-trash-can"></i> Delete Playlist</button>
+                            </div>
+                        </div>
+                        <div id="detailSongList"></div>
+                    </div>
+                </div>
+
+                <div id="page-artists" class="page-content">
+                    <div class="page-heading">
+                        <h1 class="page-title">Artists</h1>
+                        <p class="section-sub">Trending voices right now</p>
+                    </div>
+                    <div id="artistsContent"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading artists...</p></div></div>
+
+                    <div class="playlist-detail-view" id="artistDetailView">
+                        <div class="playlist-detail-header">
+                            <button class="back-btn" onclick="closeArtistDetail()"><i class="fas fa-arrow-left"></i></button>
+                            <div class="artist-avatar-wrap">
+                                <div id="artistDetailAvatar" class="artist-detail-avatar"></div>
+                                <div class="info">
+                                    <h2 id="detailArtistName" style="font-size:22px;">Artist Name</h2>
+                                    <div class="sub"><i class="fas fa-certificate" style="color:var(--accent);"></i> Verified Voice • Popular Tracks</div>
+                                </div>
+                            </div>
+                            <div class="detail-actions">
+                                <button class="play-now-btn small-btn" onclick="playArtistDetailFirst()"><i class="fas fa-play"></i> Play Top Tracks</button>
+                            </div>
+                        </div>
+                        <div id="artistDetailSongList"></div>
+                    </div>
+                </div>
+
+                <div id="page-albums" class="page-content">
+                    <div class="page-heading">
+                        <h1 class="page-title">Albums</h1>
+                        <p class="section-sub">Fresh releases & timeless records</p>
+                    </div>
+                    <div id="albumsContent"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading albums...</p></div></div>
+                </div>
+            </div>
+
+            <!-- ══════════ FLOATING PLAYER BAR ══════════ -->
+            <div class="bottom-player" id="bottom-player">
+                <div class="current-track">
+                    <div class="mini-artwork" id="bottomThumb">
+                        <i class="fas fa-headphones"></i>
+                        <div class="eq-overlay" id="eqOverlay"><span></span><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="mini-track-info">
+                        <div class="mini-title" id="bottomSongName">Nothing playing</div>
+                        <div class="mini-artist" id="bottomArtist">Pick a song to start</div>
+                    </div>
+                    <button class="mini-like-btn" id="bottomLike" onclick="toggleLike()" title="Like"><i class="fas fa-heart"></i></button>
+                </div>
+
+                <div class="player-center">
+                    <div class="center-controls">
+                        <button class="center-control-btn" id="bottomShuffle" onclick="toggleShuffle()" title="Shuffle"><i class="fas fa-shuffle"></i></button>
+                        <button class="center-control-btn" onclick="prevTrack()" title="Previous"><i class="fas fa-backward-step"></i></button>
+                        <button class="center-control-btn play-pause" id="bottomPlayBtn" onclick="togglePlay()" title="Play / Pause">
+                            <i class="fas fa-play" id="bottomPlayIcon"></i>
+                        </button>
+                        <button class="center-control-btn" onclick="nextTrack()" title="Next"><i class="fas fa-forward-step"></i></button>
+                        <button class="center-control-btn" id="bottomRepeat" onclick="toggleRepeat()" title="Repeat"><i class="fas fa-repeat"></i></button>
+                    </div>
+                    <div class="center-progress">
+                        <span class="mini-time" id="bottomCurrentTime">0:00</span>
+                        <div class="center-progress-bar" onclick="seekBottomProgress(event)">
+                            <div class="center-progress-fill" id="bottomProgressFill"><span class="progress-thumb"></span></div>
+                        </div>
+                        <span class="mini-time" id="bottomTotalTime">0:00</span>
+                    </div>
+                </div>
+
+                <div class="player-right">
+                    <button class="icon-btn small" onclick="showToast('📋 Queue: ' + (currentQueue.length || 0) + ' tracks loaded')" title="Queue"><i class="fas fa-list-ul"></i></button>
+                    <button class="icon-btn small" id="muteBtn" onclick="toggleMute()" title="Mute"><i class="fas fa-volume-high" id="volumeIcon"></i></button>
+                    <div class="volume-control">
+                        <div class="volume-slider">
+                            <div class="volume-fill" id="volumeFill"></div>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" aria-label="Volume" />
+                        </div>
+                    </div>
+                    <button class="icon-btn small" id="equalizerBtn" onclick="AudioEffects.open()" title="Equalizer" aria-label="Open equalizer" aria-haspopup="dialog" aria-controls="equalizerModalOverlay"><i class="fas fa-sliders"></i></button>
+                </div>
+            </div>
+        </main>
+
+        <!-- ── RIGHT RAIL ── -->
+        <aside class="right-rail">
+
+            <!-- NOW PLAYING -->
+            <section class="rail-card now-playing-panel">
+                <div class="npp-head">
+                    <span class="npp-label"><i class="fas fa-wave-square" aria-hidden="true"></i> Now Playing</span>
+                    <button class="icon-btn tiny" onclick="showToast('🔗 Link copied')" title="Share"><i class="fas fa-ellipsis"></i></button>
+                </div>
+
+                <div class="npp-body">
+                    <div class="album-art-container" id="nowPlayingArt" onclick="togglePlay()" title="Play / Pause">
+                        <div class="disc-glow"></div>
+                        <div class="vinyl-record" id="vinylRecord">
+                            <div class="vinyl-ring r1"></div>
+                            <div class="vinyl-ring r2"></div>
+                            <div class="vinyl-center"><i class="fas fa-play" id="vinylIcon"></i></div>
+                        </div>
+                    </div>
+                    <div class="npp-meta">
+                        <h4 class="track-title" id="nowPlayingTitle">Pick a song to begin</h4>
+                        <p class="track-artist" id="nowPlayingArtist">Your universe awaits</p>
+                    </div>
+                    <button class="action-icon-btn npp-like" id="likeBtn" onclick="toggleLike()" title="Like"><i class="fas fa-heart"></i></button>
+                </div>
+
+                <div class="playback-spectrum" id="playbackSpectrum" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+
+                <div class="progress-container">
+                    <div class="progress-track" onclick="seekProgress(event)">
+                        <div class="progress-fill" id="progressFill"><span class="progress-thumb"></span></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
+                </div>
+
+                <div class="player-controls">
+                    <button class="control-btn" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle"><i class="fas fa-shuffle"></i></button>
+                    <button class="control-btn" onclick="prevTrack()" title="Previous"><i class="fas fa-backward-step"></i></button>
+                    <button class="control-btn main" id="playBtn" onclick="togglePlay()" title="Play / Pause"><i class="fas fa-play" id="playIcon"></i></button>
+                    <button class="control-btn" onclick="nextTrack()" title="Next"><i class="fas fa-forward-step"></i></button>
+                    <button class="control-btn" id="repeatBtn" onclick="toggleRepeat()" title="Repeat"><i class="fas fa-repeat"></i></button>
+                </div>
+                <div class="npp-foot">
+                    <button class="ghost-btn tiny" id="addToPlaylistBtn" onclick="addToPlaylist()"><i class="fas fa-folder-plus"></i> Add to playlist</button>
+                    <button class="ghost-btn tiny" onclick="AudioEffects.open()"><i class="fas fa-sliders"></i> Equalizer</button>
+                </div>
+            </section>
+
+            <!-- TRENDING NOW -->
+            <section class="rail-card">
+                <div class="rail-head">
+                    <span class="rail-title"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i> Trending Now</span>
+                    <button class="view-all-link tiny" onclick="navigateTo('explore')">See all <i class="fas fa-arrow-right fa-xs"></i></button>
+                </div>
+                <div class="rail-list" id="trendingRailList"><div class="rail-loading"><i class="fas fa-spinner fa-spin"></i> Loading trends…</div></div>
+            </section>
+
+            <!-- RECENTLY ADDED (favourites) -->
+            <section class="rail-card">
+                <div class="rail-head">
+                    <span class="rail-title"><i class="fas fa-heart" aria-hidden="true"></i> Recently Added</span>
+                    <button class="view-all-link tiny" onclick="navigateTo('favorites')">See all <i class="fas fa-arrow-right fa-xs"></i></button>
+                </div>
+                <div class="rail-list" id="recentlyAddedList"><div class="rail-empty">Tap ♥ on a song and it lands here.</div></div>
+                <button class="rail-expand" id="recentlyAddedExpand" onclick="toggleRecentlyAddedExpand()" style="display:none;"><i class="fas fa-chevron-down"></i></button>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Row action menu (Trending / Recently Added "…" button) -->
+    <div class="row-menu" id="rowActionMenu" role="menu" aria-hidden="true" style="display:none;">
+        <button role="menuitem" onclick="rowMenuAction('play')"><i class="fas fa-play"></i> Play now</button>
+        <button role="menuitem" onclick="rowMenuAction('like')"><i class="fas fa-heart"></i> <span data-like-label>Add to favourites</span></button>
+        <button role="menuitem" onclick="rowMenuAction('playlist')"><i class="fas fa-folder-plus"></i> Add to playlist</button>
+    </div>
+
+
+    <!-- ══════════ SYNC & CROSS-BROWSER MODAL ══════════ -->
+    <div class="modal-overlay" id="syncModalOverlay" onclick="closeSyncModal(event)">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-arrows-rotate title-icon"></i>
+                    <div>
+                        <h3>Sync & Cross-Browser Transfer</h3>
+                        <p class="modal-sub">Transfer your playlists & favorites to another browser or device</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeSyncModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- EXPLANATION BANNER -->
+                <div class="info-banner">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Browsers isolate storage per browser by default. Use <strong>Sync Code</strong>, <strong>URL Share</strong>, or <strong>Backup File</strong> to bring your favorites & playlists to Chrome, Firefox, Safari, or another computer instantly!</span>
+                </div>
+
+                <div class="sync-tabs">
+                    <button class="sync-tab active" id="tabBtnCode" onclick="switchSyncTab('code')"><i class="fas fa-key"></i> Sync Code / Link</button>
+                    <button class="sync-tab" id="tabBtnFile" onclick="switchSyncTab('file')"><i class="fas fa-file-export"></i> Backup File (JSON)</button>
+                </div>
+
+                <!-- TAB 1: CODE / LINK -->
+                <div class="tab-content active" id="tab-sync-code">
+                    <div class="sync-section">
+                        <h4><i class="fas fa-arrow-up-from-bracket"></i> Step 1: Export from this Browser</h4>
+                        <p class="section-desc">Generate a Sync Code or Shareable Link containing your saved favorites and playlists:</p>
+                        <div class="sync-code-box">
+                            <input type="text" id="exportSyncCodeInput" class="sync-input" readonly placeholder="Click Copy Sync Code..." />
+                            <button class="sync-btn-primary" onclick="copySyncCode()"><i class="fas fa-copy"></i> Copy Code</button>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="sync-btn-secondary" onclick="copySyncLink()"><i class="fas fa-link"></i> Copy Cross-Browser Sync Link</button>
+                        </div>
+                    </div>
+
+                    <div class="sync-divider"><span>OR</span></div>
+
+                    <div class="sync-section">
+                        <h4><i class="fas fa-arrow-down-to-bracket"></i> Step 2: Import into Another Browser</h4>
+                        <p class="section-desc">Paste the Sync Code generated from your other browser here to restore all data:</p>
+                        <div class="sync-code-box">
+                            <input type="text" id="importSyncCodeInput" class="sync-input" placeholder="Paste Sync Code here..." />
+                            <button class="sync-btn-accent" onclick="applySyncCode()"><i class="fas fa-check"></i> Import & Sync</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: FILE -->
+                <div class="tab-content" id="tab-sync-file">
+                    <div class="sync-section">
+                        <h4><i class="fas fa-download"></i> Export Data File</h4>
+                        <p class="section-desc">Download a backup file (`eccoverse_backup.json`) of all your playlists and favorites.</p>
+                        <button class="sync-btn-primary" onclick="exportDataFile()"><i class="fas fa-file-arrow-down"></i> Download Backup JSON</button>
+                    </div>
+
+                    <div class="sync-divider"><span></span></div>
+
+                    <div class="sync-section">
+                        <h4><i class="fas fa-upload"></i> Restore Data File</h4>
+                        <p class="section-desc">Select a previously saved backup file to restore your collections.</p>
+                        <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importDataFile(event)" />
+                        <button class="sync-btn-secondary" onclick="document.getElementById('importFileInput').click()"><i class="fas fa-file-arrow-up"></i> Choose File to Restore</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="ghost-btn" onclick="closeSyncModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ CREATE PLAYLIST MODAL ══════════ -->
+    <div class="modal-overlay" id="createPlaylistModalOverlay" onclick="closeCreatePlaylistModal(event)">
+        <div class="modal-container playlist-create-modal" role="dialog" aria-modal="true" aria-labelledby="createPlaylistTitle" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="title-icon">
+                        <i class="fas fa-compact-disc" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <h3 id="createPlaylistTitle">Create New Playlist</h3>
+                        <p class="modal-sub">Build your custom music collection</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeCreatePlaylistModal()" aria-label="Close playlist dialog"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="sync-section">
+                    <label class="playlist-field-label" for="newPlaylistNameInput">Playlist Name</label>
+                    <input type="text" id="newPlaylistNameInput" class="sync-input playlist-name-input" placeholder="e.g. Chill Beats, Workout Energy..." maxlength="100" oninput="updatePlaylistCoverPreview()" onkeydown="if(event.key==='Enter') { event.preventDefault(); confirmCreatePlaylist(); }" />
+                </div>
+
+                <div class="sync-section">
+                    <p class="playlist-field-label" id="playlistThemeLabel">Choose Cover Vibe</p>
+                    <div class="theme-picker" role="group" aria-labelledby="playlistThemeLabel">
+                        <button type="button" class="theme-opt active" data-theme="purple" data-color="#8B5CF6" onclick="selectPlaylistTheme(this)" aria-label="Purple playlist cover" aria-pressed="true" title="Purple" style="--swatch-color:#8B5CF6; --swatch-dark:#6D28D9;"></button>
+                        <button type="button" class="theme-opt" data-theme="cyan" data-color="#06B6D4" onclick="selectPlaylistTheme(this)" aria-label="Cyan playlist cover" aria-pressed="false" title="Cyan" style="--swatch-color:#06B6D4; --swatch-dark:#0891B2;"></button>
+                        <button type="button" class="theme-opt" data-theme="pink" data-color="#EC4899" onclick="selectPlaylistTheme(this)" aria-label="Pink playlist cover" aria-pressed="false" title="Pink" style="--swatch-color:#EC4899; --swatch-dark:#BE185D;"></button>
+                        <button type="button" class="theme-opt" data-theme="amber" data-color="#F59E0B" onclick="selectPlaylistTheme(this)" aria-label="Amber playlist cover" aria-pressed="false" title="Amber" style="--swatch-color:#F59E0B; --swatch-dark:#D97706;"></button>
+                        <button type="button" class="theme-opt" data-theme="emerald" data-color="#10B981" onclick="selectPlaylistTheme(this)" aria-label="Emerald playlist cover" aria-pressed="false" title="Emerald" style="--swatch-color:#10B981; --swatch-dark:#059669;"></button>
+                    </div>
+                    <p class="theme-selection-status" aria-live="polite"><span id="selectedPlaylistThemeName">Purple</span> cover selected</p>
+                    <div class="playlist-cover-preview">
+                        <div class="playlist-cover-art" id="newPlaylistCoverPreview" aria-hidden="true"><i class="fas fa-music"></i></div>
+                        <div class="playlist-cover-preview-info">
+                            <span class="playlist-preview-label">Cover preview</span>
+                            <strong id="newPlaylistPreviewName">Your new playlist</strong>
+                            <span>0 songs · Your Playlist</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="ghost-btn" onclick="closeCreatePlaylistModal()">Cancel</button>
+                <button class="sync-btn-primary" id="createPlaylistActionBtn" onclick="confirmCreatePlaylist()"><i class="fas fa-plus"></i> Create Playlist</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ ADD TO PLAYLIST MODAL ══════════ -->
+    <div class="modal-overlay" id="addToPlaylistModalOverlay" onclick="closeAddToPlaylistModal(event)">
+        <div class="modal-container" onclick="event.stopPropagation()" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="title-icon" style="background:linear-gradient(135deg,var(--primary-strong),var(--secondary)); border-color:var(--primary);">
+                        <i class="fas fa-folder-plus" style="color:#fff;"></i>
+                    </div>
+                    <div>
+                        <h3>Add to Playlist</h3>
+                        <p class="modal-sub" id="addToPlaylistSubTitle">Select a playlist for this song</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeAddToPlaylistModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- SONG TRACK PREVIEW -->
+                <div id="addToPlaylistSongPreview" style="display:flex; align-items:center; gap:12px; background:rgba(0,0,0,0.35); padding:10px 14px; border-radius:12px; margin-bottom:16px; border:1px solid var(--glass-border);">
+                    <div id="atpSongImg" style="width:42px; height:42px; border-radius:8px; background-size:cover; background-position:center; flex-shrink:0;"></div>
+                    <div style="flex:1; overflow:hidden;">
+                        <div id="atpSongName" style="font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Song Name</div>
+                        <div id="atpSongArtist" style="font-size:11.5px; color:var(--text-grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Artist</div>
+                    </div>
+                </div>
+
+                <div id="addToPlaylistList" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+
+                <button class="sync-btn-secondary" onclick="closeAddToPlaylistModal(); openCreatePlaylistModal();" style="width:100%;">
+                    <i class="fas fa-plus"></i> Create New Playlist
+                </button>
+            </div>
+
+            <div class="modal-footer">
+                <button class="ghost-btn" onclick="closeAddToPlaylistModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ CONFIRM DELETE MODAL ══════════ -->
+    <div class="modal-overlay" id="confirmDeleteModalOverlay" onclick="closeConfirmDeleteModal(event)">
+        <div class="modal-container" onclick="event.stopPropagation()" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="title-icon" style="background:rgba(239,68,68,0.2); border-color:#EF4444;">
+                        <i class="fas fa-trash-can" style="color:#F87171;"></i>
+                    </div>
+                    <div>
+                        <h3 id="confirmDeleteTitle">Confirm Deletion</h3>
+                        <p class="modal-sub">This action cannot be undone</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeConfirmDeleteModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="confirmDeleteMessage" style="font-size:14px; color:var(--text-white); line-height:1.5;">Are you sure you want to delete this item?</p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="ghost-btn" onclick="closeConfirmDeleteModal()">Cancel</button>
+                <button class="sync-btn-primary danger" id="confirmDeleteActionBtn" onclick="executeDeleteAction()"><i class="fas fa-trash-can"></i> Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ WORKING FIVE-BAND AUDIO EQUALIZER ══════════ -->
+    <div class="modal-overlay" id="equalizerModalOverlay" onclick="AudioEffects.close(event)">
+        <div class="modal-container equalizer-modal" role="dialog" aria-modal="true" aria-labelledby="equalizerTitle" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="title-icon"><i class="fas fa-sliders"></i></div>
+                    <div><h3 id="equalizerTitle">Shape your sound</h3><p class="modal-sub">Five-band equalizer · changes apply live</p></div>
+                </div>
+                <button class="modal-close-btn" onclick="AudioEffects.close()" aria-label="Close equalizer"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="equalizer-toolbar">
+                    <div><span class="eq-overline">Equalizer</span><strong id="eqPresetName">Flat</strong></div>
+                    <button class="eq-enable-btn" id="eqEnableBtn" role="switch" aria-checked="true" onclick="AudioEffects.toggle()"><span class="eq-switch-track"></span><span id="eqEnableLabel">On</span></button>
+                </div>
+                <div class="eq-presets" id="eqPresets" role="group" aria-label="Equalizer presets"></div>
+                <div class="eq-bands" id="eqBands"></div>
+                <div class="eq-spectrum-wrap">
+                    <div class="eq-spectrum-caption"><span>Live spectrum</span><span id="eqSpectrumState">Paused</span></div>
+                    <div class="equalizer-spectrum" id="equalizerSpectrum" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                </div>
+                <p class="eq-status" id="eqStatus" role="status">Start a song to hear your settings.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="ghost-btn" onclick="AudioEffects.preset('flat')"><i class="fas fa-rotate-left"></i> Reset to Flat</button>
+                <button class="sync-btn-primary" onclick="AudioEffects.close()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" preload="metadata"></audio>
+    <script src="js/audio-effects.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
+
+</body>
+</html>
